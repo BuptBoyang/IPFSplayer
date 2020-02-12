@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mobile_navigation"
+    app:startDestination="@+id/nav_home">
+
+    <fragment
+        android:id="@+id/nav_home"
+        android:name="indi.boyang.ipfsplayer.ui.home.HomeFragment"
+        android:label="@string/menu_home"
+        tools:layout="@layout/fragment_home" >
+        <action
+            android:id="@+id/action_home_to_video"
+            app:destination="@id/videoFragment"
+            app:popUpTo="@+id/nav_home"/>
+    </fragment>
+
+    <fragment
+        android:id="@+id/nav_tools"
+        android:name="indi.boyang.ipfsplayer.ui.tools.ToolsFragment"
+        android:label="@string/menu_tools"
+        tools:layout="@layout/fragment_tools" />
+
+    <fragment
+        android:id="@+id/nav_share"
+        android:name="indi.boyang.ipfsplayer.ui.share.ShareFragment"
+        android:label="@string/menu_share"
+        tools:layout="@layout/fragment_share" />
+
+    <fragment
+        android:id="@+id/nav_send"
+        android:name="indi.boyang.ipfsplayer.ui.send.SendFragment"
+        android:label="@string/menu_send"
+        tools:layout="@layout/fragment_send" />
+    <fragment
+        android:id="@+id/videoFragment"
+        android:name="indi.boyang.ipfsplayer.ui.videoui.VideoFragment"
+        android:label="VideoFragment"
+        tools:layout="@layout/fragment_video">
+        <argument
+            android:name="id"
+            app:argType="long"
+            android:defaultValue="0L" />
+    </fragment>
+</navigation>

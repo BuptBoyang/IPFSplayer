@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:id="@+id/text_send"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAlignment="center"
+        android:textSize="20sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <LinearLayout
+        android:id="@+id/linearLayout"
+        android:layout_width="409dp"
+        android:layout_height="543dp"
+        android:orientation="vertical"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <TextView
+            android:id="@+id/sendTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Title"
+            tools:text="Title" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/inputTitle"
+            android:layout_width="409dp"
+            android:layout_height="wrap_content">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/editTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Title" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <TextView
+            android:id="@+id/sendCover"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Cover" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/inputDescrip"
+            android:layout_width="409dp"
+            android:layout_height="wrap_content" />
+
+        <Button
+            android:id="@+id/buttonChooseCover"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Choose Cover" />
+
+        <ProgressBar
+            android:id="@+id/progressBarCover"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+        <TextView
+            android:id="@+id/coverFileName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="no file" />
+
+        <Button
+            android:id="@+id/buttonChooseVideo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="CHOOSE VIDEO" />
+
+        <ProgressBar
+            android:id="@+id/progressBarVideo"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+        <TextView
+            android:id="@+id/videoFileName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="no file" />
+
+        <Button
+            android:id="@+id/buttonUpload"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Upload" />
+
+        <TextView
+            android:id="@+id/uploadResultView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+    </LinearLayout>
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>
