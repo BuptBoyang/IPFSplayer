@@ -30,7 +30,7 @@ interface MyService {
             return Retrofit.Builder()
                 .addConverterFactory(GsonConverterFactory.create())
                 .addCallAdapterFactory(LiveDataCallAdapterFactory())
-                .baseUrl("http://10.0.2.2:8080") //https://api.noroo.xyz, http://35.197.62.104:8080
+                .baseUrl("http://35.203.163.14:8080") //https://api.noroo.xyz, http://10.0.2.2:8080
                 .build()
                 .create(MyService::class.java)
         }
