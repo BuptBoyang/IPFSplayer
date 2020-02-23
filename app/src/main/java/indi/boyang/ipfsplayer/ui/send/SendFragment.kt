@@ -1,23 +1,29 @@
 package indi.boyang.ipfsplayer.ui.send
 
-import android.content.ContentResolver
+import android.content.Context
 import android.content.Intent
 import android.database.Cursor
 import android.net.Uri
 import android.os.Bundle
+import android.provider.MediaStore
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
+import androidx.loader.content.CursorLoader
+import indi.boyang.ipfsplayer.api.ApiSuccessResponse
 import indi.boyang.ipfsplayer.api.MyService
+import indi.boyang.ipfsplayer.models.Video
+import indi.boyang.ipfsplayer.util.SendViewModelFactory
 import kotlinx.android.synthetic.main.fragment_send.*
-import okhttp3.MediaType
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
-import okhttp3.RequestBody
-import okhttp3.ResponseBody
-import retrofit2.Call
-import retrofit2.Response
+import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.File
 
 
@@ -27,8 +33,6 @@ class SendFragment : Fragment() {
     private val VIDEO_REQUEST_CODE = 2
     private var coverUri: Uri? = null
     private var videoUri: Uri? = null
-    private lateinit var coverPath:String
-    private lateinit var videoPath:String
 
     private lateinit var sendViewModel: SendViewModel
 
@@ -37,8 +41,6 @@ class SendFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        sendViewModel =
-            ViewModelProvider(this).get(SendViewModel::class.java)
         val root = inflater.inflate(indi.boyang.ipfsplayer.R.layout.fragment_send, container, false)
         return root
     }
@@ -54,30 +56,22 @@ class SendFragment : Fragment() {
 
         buttonChooseVideo.setOnClickListener {
             val pickVideoIntent = Intent(Intent.ACTION_PICK)
-            pickVideoIntent.type = "video/mp4"
+            pickVideoIntent.type = "video/*"
             startActivityForResult(pickVideoIntent,VIDEO_REQUEST_CODE)
         }
 
-        buttonUpload.setOnClickListener{
-
-            if(coverUri!=null && videoUri!=null){
-                MyService.create2().uploadVideo(
-                    editTitle.text.toString(),
-                    pathToMultipart(coverPath,"pic"),
-                    pathToMultipart(videoPath,"video")
-                ).enqueue(object : retrofit2.Callback<ResponseBody> {
-                    override fun onResponse(
-                        call: Call<ResponseBody>,
-                        response: Response<ResponseBody>
-                    ) {
-                        uploadResultView.text = "finish"
-                    }
-                    override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-                        uploadResultView.text = t.message
-                    }
+        buttonUpload.setOnClickListener {
+            if(coverUri != null && videoUri != null) {
+                val titlePart = editTitle.text.toString()
+                Log.d("URI", coverUri.toString())
+                Log.d("URI", videoUri.toString())
+                sendViewModel = ViewModelProvider(this,
+                    SendViewModelFactory(titlePart, coverUri as Uri, videoUri as Uri))
+                    .get(SendViewModel::class.java)
+                sendViewModel.video.observe(viewLifecycleOwner, Observer<Video> {
+                    Log.d("TITLE", it.title)
                 })
-            } else {
-                uploadResultView.text = "Please select cover and video file"
+                uploadResultView.text = "finish"
             }
         }
     }
@@ -85,41 +79,28 @@ class SendFragment : Fragment() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         when(requestCode){
             PHOTO_REQUEST_CODE -> if (data != null) {
-                coverUri = data.data
-                val resolver: ContentResolver = this.context!!.contentResolver
-                val cursor: Cursor = resolver.query(coverUri, null, null, null, null) ?: return
-                if (cursor.moveToFirst()) {
-                    coverPath = cursor.getString(cursor.getColumnIndex("_data"))
-                }
-                cursor.close()
-                coverFileName.text = coverPath
+                coverUri = getRealPathFromURI(context!!, data.data!!)
+                coverFileName.text = coverUri.toString()
             }
             VIDEO_REQUEST_CODE -> if (data != null) {
-                videoUri = data.data
-                val resolver: ContentResolver = this.context!!.contentResolver
-                val cursor: Cursor = resolver.query(videoUri, null, null, null, null) ?: return
-                if (cursor.moveToFirst()) {
-                    videoPath = cursor.getString(cursor.getColumnIndex("_data"))
-                }
-                cursor.close()
-                videoFileName.text = videoPath
+                videoUri = getRealPathFromURI(context!!, data.data!!)
+                videoFileName.text = videoUri.toString()
             }
         }
     }
 
-    private fun pathToMultipart(path:String,name:String): MultipartBody.Part {
-        val file = File(path)
-        val requestFile =
-            RequestBody.create(MediaType.parse("multipart/form-data"), file)
-        return MultipartBody.Part.createFormData(name, file.name, requestFile)
-    }
-
-    private fun uriToMultipart(uri: Uri,name:String): MultipartBody.Part {
-        val file = File(uri.path)
-        val requestFile =
-            RequestBody.create(MediaType.parse("multipart/form-data"), file)
-        return MultipartBody.Part.createFormData(name, file.name, requestFile)
+    private fun getRealPathFromURI(
+        context: Context,
+        contentUri: Uri
+    ): Uri {
+        val proj = arrayOf(MediaStore.Images.Media.DATA)
+        val loader = CursorLoader(context, contentUri, proj, null, null, null)
+        val cursor: Cursor = loader.loadInBackground()!!
+        val column_index: Int = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA)
+        cursor.moveToFirst()
+        val result: String = cursor.getString(column_index)
+        cursor.close()
+        return result.toUri()
     }
 
 }
-
