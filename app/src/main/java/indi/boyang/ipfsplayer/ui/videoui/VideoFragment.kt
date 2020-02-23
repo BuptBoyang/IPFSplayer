@@ -39,12 +39,12 @@ class VideoFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         val id = args.id
         var shareURL:String = ""
-        videoViewModel.videoUrl.observe(this,Observer<String>{
+        videoViewModel.videoUrl.observe(viewLifecycleOwner, Observer<String>{
             webView.loadUrl(it)
             textView2.text = it
             shareURL = it
         })
-        videoViewModel.title.observe(this, Observer<String> {
+        videoViewModel.title.observe(viewLifecycleOwner, Observer<String> {
             textTitle.text = it
         })
         buttonShare.setOnClickListener{

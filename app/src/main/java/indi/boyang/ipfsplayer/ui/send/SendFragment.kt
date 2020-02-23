@@ -12,9 +12,13 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.loader.content.CursorLoader
+import indi.boyang.ipfsplayer.api.ApiSuccessResponse
 import indi.boyang.ipfsplayer.api.MyService
+import indi.boyang.ipfsplayer.models.Video
+import indi.boyang.ipfsplayer.util.SendViewModelFactory
 import kotlinx.android.synthetic.main.fragment_send.*
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
@@ -37,8 +41,6 @@ class SendFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        sendViewModel =
-            ViewModelProvider(this).get(SendViewModel::class.java)
         val root = inflater.inflate(indi.boyang.ipfsplayer.R.layout.fragment_send, container, false)
         return root
     }
@@ -59,15 +61,16 @@ class SendFragment : Fragment() {
         }
 
         buttonUpload.setOnClickListener {
-            if(coverUri!=null && videoUri!=null) {
-                val titlePart = editTitle.text.toString().toRequestBody()
+            if(coverUri != null && videoUri != null) {
+                val titlePart = editTitle.text.toString()
                 Log.d("URI", coverUri.toString())
                 Log.d("URI", videoUri.toString())
-                MyService.create().uploadVideo(
-                    titlePart,
-                    uriToMultipart(coverUri!!, "pic", "image/*"),
-                    uriToMultipart(videoUri!!, "video", "video/*")
-                )
+                sendViewModel = ViewModelProvider(this,
+                    SendViewModelFactory(titlePart, coverUri as Uri, videoUri as Uri))
+                    .get(SendViewModel::class.java)
+                sendViewModel.video.observe(viewLifecycleOwner, Observer<Video> {
+                    Log.d("TITLE", it.title)
+                })
                 uploadResultView.text = "finish"
             }
         }
@@ -84,13 +87,6 @@ class SendFragment : Fragment() {
                 videoFileName.text = videoUri.toString()
             }
         }
-    }
-
-    private fun uriToMultipart(uri: Uri, name: String, type: String): MultipartBody.Part {
-        val file = File(uri.path)
-        val requestFile =
-            file.asRequestBody(type.toMediaTypeOrNull())
-        return MultipartBody.Part.createFormData(name, file.name, requestFile)
     }
 
     private fun getRealPathFromURI(

@@ -13,20 +13,20 @@ import retrofit2.http.*
 
 interface MyService {
     @GET("/videos")
-    fun getPlaylist(): LiveData<List<Video>>
+    fun getPlaylist(): LiveData<ApiResponse<List<Video>>>
 
     @GET("/videos/{id}")
     fun getVideo(
         @Path("id") id: Long
-    ): LiveData<Video>
+    ): LiveData<ApiResponse<Video>>
 
     @Multipart
     @POST("/videos")
     fun uploadVideo(
-        @Part("title") title: RequestBody,
+        @Part("title") title: String,
         @Part picFile: MultipartBody.Part,
         @Part videoFile: MultipartBody.Part
-    ):LiveData<Video>
+    ):LiveData<ApiResponse<Video>>
 
     companion object Factory {
         fun create(): MyService {
