@@ -1,18 +1,25 @@
 package indi.boyang.ipfsplayer.ui.send
 
+import android.content.Context
 import android.content.Intent
+import android.database.Cursor
 import android.net.Uri
 import android.os.Bundle
+import android.provider.MediaStore
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.loader.content.CursorLoader
 import indi.boyang.ipfsplayer.api.MyService
 import kotlinx.android.synthetic.main.fragment_send.*
-import okhttp3.MediaType
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
-import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.File
 
 
@@ -51,15 +58,17 @@ class SendFragment : Fragment() {
             startActivityForResult(pickVideoIntent,VIDEO_REQUEST_CODE)
         }
 
-        buttonUpload.setOnClickListener{
-            if(coverUri!=null && videoUri!=null){
+        buttonUpload.setOnClickListener {
+            if(coverUri!=null && videoUri!=null) {
+                val titlePart = editTitle.text.toString().toRequestBody()
+                Log.d("URI", coverUri.toString())
+                Log.d("URI", videoUri.toString())
                 MyService.create().uploadVideo(
-                    editTitle.text.toString(),
-                    uriToMultipart(coverUri!!),
-                    uriToMultipart(videoUri!!)
+                    titlePart,
+                    uriToMultipart(coverUri!!, "pic", "image/*"),
+                    uriToMultipart(videoUri!!, "video", "video/*")
                 )
                 uploadResultView.text = "finish"
-                //println(editTitle.text.toString())
             }
         }
     }
@@ -67,22 +76,35 @@ class SendFragment : Fragment() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         when(requestCode){
             PHOTO_REQUEST_CODE -> if (data != null) {
-                coverUri = data.data
+                coverUri = getRealPathFromURI(context!!, data.data!!)
                 coverFileName.text = coverUri.toString()
             }
             VIDEO_REQUEST_CODE -> if (data != null) {
-                videoUri = data.data
+                videoUri = getRealPathFromURI(context!!, data.data!!)
                 videoFileName.text = videoUri.toString()
             }
         }
     }
 
-    private fun uriToMultipart(uri: Uri): MultipartBody.Part {
+    private fun uriToMultipart(uri: Uri, name: String, type: String): MultipartBody.Part {
         val file = File(uri.path)
         val requestFile =
-            RequestBody.create(MediaType.parse("multipart/form-data"), file)
-        return MultipartBody.Part.createFormData("file", file.name, requestFile)
+            file.asRequestBody(type.toMediaTypeOrNull())
+        return MultipartBody.Part.createFormData(name, file.name, requestFile)
     }
 
+    private fun getRealPathFromURI(
+        context: Context,
+        contentUri: Uri
+    ): Uri {
+        val proj = arrayOf(MediaStore.Images.Media.DATA)
+        val loader = CursorLoader(context, contentUri, proj, null, null, null)
+        val cursor: Cursor = loader.loadInBackground()!!
+        val column_index: Int = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA)
+        cursor.moveToFirst()
+        val result: String = cursor.getString(column_index)
+        cursor.close()
+        return result.toUri()
+    }
 
 }
