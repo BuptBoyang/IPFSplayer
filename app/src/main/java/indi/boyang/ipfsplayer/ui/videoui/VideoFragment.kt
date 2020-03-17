@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
@@ -39,23 +40,31 @@ class VideoFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         val id = args.id
         var shareURL:String = ""
-        videoViewModel.videoUrl.observe(viewLifecycleOwner, Observer<String>{
+        videoViewModel.videoUrl.observe(viewLifecycleOwner,Observer<String>{
             webView.loadUrl(it)
-            textView2.text = it
             shareURL = it
         })
         videoViewModel.title.observe(viewLifecycleOwner, Observer<String> {
-            textTitle.text = it
+            //textTitle.text = it
         })
-        buttonShare.setOnClickListener{
+        imageButtonShare.setOnClickListener{
             val clipboard = activity?.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
             val cd: ClipData = ClipData.newPlainText("SHARE LINK",shareURL)
-            textView2.text="Copy shared link"
             clipboard.primaryClip = cd
+
+            val text = "Share link copied"
+            val duration = Toast.LENGTH_SHORT
+            val toast = Toast.makeText(context, text, duration)
+            toast.show()
         }
+
+        val settings = webView.settings
+        settings.useWideViewPort = true
+        settings.loadWithOverviewMode = true
 
         postponeEnterTransition()
         startPostponedEnterTransition()
     }
+
 
 }
