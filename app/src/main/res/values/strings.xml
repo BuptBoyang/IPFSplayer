@@ -14,4 +14,6 @@
     <string name="menu_share">Share</string>
     <string name="menu_send">Send</string>
     <string name="video_cover">video_cover</string>
+    <string name="null_file">Please select cover and video file</string>
+    <string name="upload_success">Upload Success</string>
 </resources>

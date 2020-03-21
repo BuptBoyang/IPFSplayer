@@ -66,5 +66,4 @@ class VideoFragment : Fragment() {
         startPostponedEnterTransition()
     }
 
-
 }

@@ -1,38 +1,38 @@
 package indi.boyang.ipfsplayer.ui.send
 
-import android.content.Context
+import android.content.ContentResolver
 import android.content.Intent
 import android.database.Cursor
 import android.net.Uri
 import android.os.Bundle
-import android.provider.MediaStore
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.core.net.toUri
+import android.widget.Toast
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
-import androidx.loader.content.CursorLoader
-import indi.boyang.ipfsplayer.api.ApiSuccessResponse
+import indi.boyang.ipfsplayer.R
 import indi.boyang.ipfsplayer.api.MyService
-import indi.boyang.ipfsplayer.models.Video
-import indi.boyang.ipfsplayer.util.SendViewModelFactory
 import kotlinx.android.synthetic.main.fragment_send.*
+import okhttp3.MediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
+import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.asRequestBody
-import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.ResponseBody
+import retrofit2.Call
+import retrofit2.Response
 import java.io.File
+import java.lang.Exception
 
 
 class SendFragment : Fragment() {
 
     private val PHOTO_REQUEST_CODE = 1
     private val VIDEO_REQUEST_CODE = 2
-    private var coverUri: Uri? = null
-    private var videoUri: Uri? = null
+    private lateinit var coverPath:String
+    private lateinit var videoPath:String
+    private var fileFlag = BooleanArray(2) {false}
 
     private lateinit var sendViewModel: SendViewModel
 
@@ -41,7 +41,9 @@ class SendFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        val root = inflater.inflate(indi.boyang.ipfsplayer.R.layout.fragment_send, container, false)
+        sendViewModel =
+            ViewModelProvider(this).get(SendViewModel::class.java)
+        val root = inflater.inflate(R.layout.fragment_send, container, false)
         return root
     }
 
@@ -56,22 +58,34 @@ class SendFragment : Fragment() {
 
         buttonChooseVideo.setOnClickListener {
             val pickVideoIntent = Intent(Intent.ACTION_PICK)
-            pickVideoIntent.type = "video/*"
+            pickVideoIntent.type = "video/mp4"
             startActivityForResult(pickVideoIntent,VIDEO_REQUEST_CODE)
         }
 
-        buttonUpload.setOnClickListener {
-            if(coverUri != null && videoUri != null) {
-                val titlePart = editTitle.text.toString()
-                Log.d("URI", coverUri.toString())
-                Log.d("URI", videoUri.toString())
-                sendViewModel = ViewModelProvider(this,
-                    SendViewModelFactory(titlePart, coverUri as Uri, videoUri as Uri))
-                    .get(SendViewModel::class.java)
-                sendViewModel.video.observe(viewLifecycleOwner, Observer<Video> {
-                    Log.d("TITLE", it.title)
+        buttonUpload.setOnClickListener{
+
+            if(fileFlag[0]&&fileFlag[1]){
+                val text = "Uploading..."
+                val duration = Toast.LENGTH_SHORT
+                val toast = Toast.makeText(context, text, duration)
+                toast.show()
+                MyService.create2().uploadVideo(
+                    editTitle.text.toString(),
+                    pathToMultipart(coverPath,"pic"),
+                    pathToMultipart(videoPath,"video")
+                ).enqueue(object : retrofit2.Callback<ResponseBody> {
+                    override fun onResponse(
+                        call: Call<ResponseBody>,
+                        response: Response<ResponseBody>
+                    ) {
+                        uploadResultView.text = getString(R.string.upload_success)
+                    }
+                    override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                        uploadResultView.text = t.message
+                    }
                 })
-                uploadResultView.text = "finish"
+            } else {
+                uploadResultView.text = getString(R.string.null_file)
             }
         }
     }
@@ -79,28 +93,39 @@ class SendFragment : Fragment() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         when(requestCode){
             PHOTO_REQUEST_CODE -> if (data != null) {
-                coverUri = getRealPathFromURI(context!!, data.data!!)
-                coverFileName.text = coverUri.toString()
+                coverPath = uriToPath(data,PHOTO_REQUEST_CODE)
+                coverFileName.text = coverPath
             }
             VIDEO_REQUEST_CODE -> if (data != null) {
-                videoUri = getRealPathFromURI(context!!, data.data!!)
-                videoFileName.text = videoUri.toString()
+                videoPath = uriToPath(data,VIDEO_REQUEST_CODE)
+                videoFileName.text = videoPath
             }
         }
     }
 
-    private fun getRealPathFromURI(
-        context: Context,
-        contentUri: Uri
-    ): Uri {
-        val proj = arrayOf(MediaStore.Images.Media.DATA)
-        val loader = CursorLoader(context, contentUri, proj, null, null, null)
-        val cursor: Cursor = loader.loadInBackground()!!
-        val column_index: Int = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA)
-        cursor.moveToFirst()
-        val result: String = cursor.getString(column_index)
-        cursor.close()
-        return result.toUri()
+    private fun uriToPath(data: Intent,type:Int):String{
+        var resultPath = "no file"
+        val resolver: ContentResolver = this.context!!.contentResolver
+        try {
+            val cursor: Cursor = resolver.query(data.data!!, null, null, null, null) ?: return resultPath
+            if (cursor.moveToFirst()) {
+                resultPath = cursor.getString(cursor.getColumnIndex("_data"))
+                fileFlag[type-1] = true
+            }
+            cursor.close()
+        }catch (e:Exception){
+            resultPath = e.toString()
+        } finally {
+            return resultPath
+        }
+    }
+
+    private fun pathToMultipart(path:String,name:String): MultipartBody.Part {
+        val file = File(path)
+        val requestFile =
+            file.asRequestBody("multipart/form-data".toMediaTypeOrNull())
+        return MultipartBody.Part.createFormData(name, file.name, requestFile)
     }
 
 }
+

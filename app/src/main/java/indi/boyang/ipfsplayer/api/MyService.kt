@@ -5,41 +5,48 @@ import indi.boyang.ipfsplayer.models.Video
 import indi.boyang.ipfsplayer.util.LiveDataCallAdapterFactory
 import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
-import okhttp3.RequestBody
-import okhttp3.logging.HttpLoggingInterceptor
+import okhttp3.ResponseBody
+import retrofit2.Call
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.*
+import java.util.concurrent.TimeUnit
+
 
 interface MyService {
     @GET("/videos")
-    fun getPlaylist(): LiveData<ApiResponse<List<Video>>>
+    fun getPlaylist(): LiveData<List<Video>>
 
     @GET("/videos/{id}")
     fun getVideo(
         @Path("id") id: Long
-    ): LiveData<ApiResponse<Video>>
+    ): LiveData<Video>
 
     @Multipart
     @POST("/videos")
     fun uploadVideo(
         @Part("title") title: String,
-        @Part picFile: MultipartBody.Part,
-        @Part videoFile: MultipartBody.Part
-    ):LiveData<ApiResponse<Video>>
+        @Part pic: MultipartBody.Part,
+        @Part video: MultipartBody.Part
+    ): Call<ResponseBody>
 
     companion object Factory {
         fun create(): MyService {
-            val interceptor = HttpLoggingInterceptor()
-            interceptor.setLevel(HttpLoggingInterceptor.Level.BODY)
-            val client = OkHttpClient.Builder().addInterceptor(interceptor).build()
             return Retrofit.Builder()
                 .addConverterFactory(GsonConverterFactory.create())
                 .addCallAdapterFactory(LiveDataCallAdapterFactory())
-                .client(client)
-                .baseUrl("http://35.203.163.14:8081") //https://api.noroo.xyz, http://10.0.2.2:8081
+                .baseUrl("http://10.0.2.2:8081") //http://10.0.2.2:8081, https://api.nroo.xyz
+                .build()
+                .create(MyService::class.java)
+        }
+
+        fun create2(): MyService {
+            return Retrofit.Builder()
+                .addConverterFactory(GsonConverterFactory.create())
+                .baseUrl("http://10.0.2.2:8081") //http://10.0.2.2:8081, https://api.noroo.xyz
                 .build()
                 .create(MyService::class.java)
         }
     }
 }
+
