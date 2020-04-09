@@ -13,14 +13,22 @@ import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.navArgs
 import androidx.transition.TransitionInflater
+import indi.boyang.ipfsplayer.R
+import indi.boyang.ipfsplayer.activities.MainActivity
+import indi.boyang.ipfsplayer.api.MyService
 import indi.boyang.ipfsplayer.databinding.FragmentVideoBinding
 import indi.boyang.ipfsplayer.util.VideoViewModelFactory
 import kotlinx.android.synthetic.main.fragment_video.*
+import okhttp3.ResponseBody
+import retrofit2.Call
+import retrofit2.Response
 
 class VideoFragment : Fragment() {
 
     private lateinit var binding: FragmentVideoBinding
     private lateinit var videoViewModel: VideoViewModel
+    private lateinit var userName:String
+
     val args: VideoFragmentArgs by navArgs()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,9 +38,12 @@ class VideoFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+        val activity: MainActivity? = activity as MainActivity?
+        userName = activity!!.getUsername()
         binding = FragmentVideoBinding.inflate(inflater,container,false)
-        videoViewModel = ViewModelProvider(this, VideoViewModelFactory(args.id))
+        videoViewModel = ViewModelProvider(this, VideoViewModelFactory(args.id,userName))
             .get(VideoViewModel::class.java)
+
 
         return binding.root
     }
@@ -56,6 +67,24 @@ class VideoFragment : Fragment() {
             val duration = Toast.LENGTH_SHORT
             val toast = Toast.makeText(context, text, duration)
             toast.show()
+        }
+        imageButtonLike.setOnClickListener{
+
+            MyService.create2().like(id,userName
+            ).enqueue(object : retrofit2.Callback<ResponseBody> {
+                override fun onResponse(
+                    call: Call<ResponseBody>,
+                    response: Response<ResponseBody>
+                ) {
+                    //
+                    println("$id   $userName")
+                    imageButtonLike.setImageResource(R.drawable.ic_star_black_24dp)
+                }
+
+                override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                    //
+                }
+            })
         }
 
         val settings = webView.settings

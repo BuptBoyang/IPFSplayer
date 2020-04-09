@@ -1,6 +1,7 @@
 package indi.boyang.ipfsplayer.api
 
 import androidx.lifecycle.LiveData
+import indi.boyang.ipfsplayer.models.AccountInfo
 import indi.boyang.ipfsplayer.models.Video
 import indi.boyang.ipfsplayer.util.LiveDataCallAdapterFactory
 import okhttp3.MultipartBody
@@ -19,15 +20,36 @@ interface MyService {
 
     @GET("/videos/{id}")
     fun getVideo(
-        @Path("id") id: Long
+        @Path("id") id: Long,
+        @Query("operator") operator: String
     ): LiveData<Video>
+
+    @GET("/users/account/{username}")
+    fun getAccount(
+        @Path("username") username: String
+    ): LiveData<AccountInfo>
 
     @Multipart
     @POST("/videos")
     fun uploadVideo(
         @Part("title") title: String,
         @Part pic: MultipartBody.Part,
-        @Part video: MultipartBody.Part
+        @Part video: MultipartBody.Part,
+        @Part ("uploader")uploader: String
+    ): Call<ResponseBody>
+
+    @FormUrlEncoded
+    @POST("/users/")
+    fun login(
+        @Field("username") username:String,
+        @Field("password_md5") password_md5:String
+    ): Call<ResponseBody>
+
+    @FormUrlEncoded
+    @POST("/videos/{id}/motivation")
+    fun like(
+        @Path("id") id: Long,
+        @Field("operator") operator: String
     ): Call<ResponseBody>
 
     companion object Factory {

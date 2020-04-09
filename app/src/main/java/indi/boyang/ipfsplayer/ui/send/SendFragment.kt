@@ -3,7 +3,6 @@ package indi.boyang.ipfsplayer.ui.send
 import android.content.ContentResolver
 import android.content.Intent
 import android.database.Cursor
-import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -12,18 +11,16 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import indi.boyang.ipfsplayer.R
+import indi.boyang.ipfsplayer.activities.MainActivity
 import indi.boyang.ipfsplayer.api.MyService
 import kotlinx.android.synthetic.main.fragment_send.*
-import okhttp3.MediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
-import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.ResponseBody
 import retrofit2.Call
 import retrofit2.Response
 import java.io.File
-import java.lang.Exception
 
 
 class SendFragment : Fragment() {
@@ -33,6 +30,7 @@ class SendFragment : Fragment() {
     private lateinit var coverPath:String
     private lateinit var videoPath:String
     private var fileFlag = BooleanArray(2) {false}
+    private lateinit var userName:String
 
     private lateinit var sendViewModel: SendViewModel
 
@@ -43,6 +41,9 @@ class SendFragment : Fragment() {
     ): View? {
         sendViewModel =
             ViewModelProvider(this).get(SendViewModel::class.java)
+        //userName = arguments?.getString("userName")?:"null"
+        val activity: MainActivity? = activity as MainActivity?
+        userName = activity!!.getUsername()
         val root = inflater.inflate(R.layout.fragment_send, container, false)
         return root
     }
@@ -64,15 +65,17 @@ class SendFragment : Fragment() {
 
         buttonUpload.setOnClickListener{
 
-            if(fileFlag[0]&&fileFlag[1]){
+            if(fileFlag[0] && fileFlag[1]){
+
                 val text = "Uploading..."
-                val duration = Toast.LENGTH_SHORT
-                val toast = Toast.makeText(context, text, duration)
+                val toast = Toast.makeText(context, text, Toast.LENGTH_SHORT)
                 toast.show()
+                println("SendFragment ++++$userName")
                 MyService.create2().uploadVideo(
                     editTitle.text.toString(),
                     pathToMultipart(coverPath,"pic"),
-                    pathToMultipart(videoPath,"video")
+                    pathToMultipart(videoPath,"video"),
+                    userName
                 ).enqueue(object : retrofit2.Callback<ResponseBody> {
                     override fun onResponse(
                         call: Call<ResponseBody>,

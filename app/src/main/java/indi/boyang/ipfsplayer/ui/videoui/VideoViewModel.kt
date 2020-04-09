@@ -6,8 +6,8 @@ import androidx.lifecycle.ViewModel
 import indi.boyang.ipfsplayer.models.Video
 import indi.boyang.ipfsplayer.repository.VideoRepository
 
-class VideoViewModel(_id: Long): ViewModel() {
-    val repo = VideoRepository(_id)
+class VideoViewModel(_id: Long,operator:String): ViewModel() {
+    val repo = VideoRepository(_id,operator)
     val id: LiveData<Long> = Transformations.map(repo.video){ video -> video.id}
     val videoUrl:LiveData<String> = Transformations.map(repo.video) { video -> video.videoURL}
     val picUrl:LiveData<String> = Transformations.map(repo.video){video -> video.picURL}
